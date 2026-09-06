@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal SRT 2 Kota Pasuruan</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- HTML5 QR Code Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        /* Gaya khusus untuk cetak ukuran A4 */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+            @page { size: A4; margin: 20mm; }
+            .kop-surat { border-bottom: 3px solid black; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+        }
+        .app-bg { background-color: #f0fdf4; }
+    </style>
+</head>
+<body class="app-bg min-h-screen text-gray-800 font-sans">
+
+    <!-- Container Utama -->
+    <div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-lg relative overflow-x-hidden">
+        
+        <!-- HALAMAN AWAL (Belum Login) -->
+        <div id="view-welcome" class="flex flex-col items-center justify-center min-h-screen p-6">
+            <img src="https://via.placeholder.com/150x150/16a34a/ffffff?text=Logo+SRT+2" alt="Logo Sekolah" class="w-32 h-32 mb-6 rounded-full shadow-md">
+            <h1 class="text-2xl font-bold text-center text-green-700 mb-2">Portal SRT 2 Kota Pasuruan</h1>
+            <p class="text-center italic text-gray-500 mb-8">"Cerdas Bersama, Tumbuh Setara"</p>
+            <button onclick="showView('view-login')" class="w-full bg-green-600 text-white font-semibold py-3 rounded-xl shadow hover:bg-green-700 transition">
+                Masuk / Login
+            </button>
+        </div>
+
+        <!-- HALAMAN LOGIN -->
+        <div id="view-login" class="hidden flex flex-col min-h-screen p-6">
+            <button onclick="showView('view-welcome')" class="text-gray-500 mb-4">&larr; Kembali</button>
+            <div class="flex-1 flex flex-col items-center justify-center">
+                <img src="https://via.placeholder.com/100x100/16a34a/ffffff?text=Logo" alt="Logo" class="w-20 h-20 mb-6 rounded-full">
+                
+                <div class="w-full space-y-4">
+                    <h2 class="text-xl font-bold text-center">Masuk ke Portal</h2>
+                    <!-- Login Admin / Ortu -->
+                    <input type="text" id="inputId" placeholder="NIP / NIW" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="password" id="inputPassword" placeholder="Kata Sandi (Khusus Admin/Ortu)" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <button onclick="handleManualLogin()" class="w-full bg-green-600 text-white font-semibold py-3 rounded-xl shadow hover:bg-green-700 transition">
+                        Masuk
+                    </button>
+                    
+                    <div class="relative flex py-4 items-center">
+                        <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-400">Atau</span>
+                        <div class="flex-grow border-t border-gray-300"></div>
+                    </div>
+
+                    <!-- Login QR -->
+                    <button onclick="startQrScanner()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl shadow hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        Gunakan Scan QR
+                    </button>
+                    <div id="qr-reader" class="w-full mt-4 hidden rounded overflow-hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD ADMIN -->
+        <div id="view-admin-dashboard" class="hidden flex flex-col min-h-screen bg-gray-50 pb-20">
+            <header class="bg-green-600 text-white p-4 shadow flex justify-between items-center">
+                <div>
+                    <h2 class="font-bold text-lg">Dasbor Admin</h2>
+                    <p class="text-xs opacity-80" id="admin-name">Memuat...</p>
+                </div>
+                <button onclick="logout()" class="text-sm underline">Keluar</button>
+            </header>
+            
+            <div class="p-4 space-y-4">
+                <!-- Info Ringkas -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow text-center">
+                        <p class="text-2xl font-bold text-red-500" id="stat-absen">0</p>
+                        <p class="text-xs text-gray-500">Siswa Tdk Hadir</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow text-center">
+                        <p class="text-2xl font-bold text-blue-500" id="stat-pinjam">0</p>
+                        <p class="text-xs text-gray-500">Peminjaman Hari Ini</p>
+                    </div>
+                </div>
+
+                <!-- Menu Navigasi Admin -->
+                <h3 class="font-semibold text-gray-700 mt-4">Menu Utama</h3>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <button onclick="alert('Buka Modul Absensi - Mode Continuous QR')" class="bg-white p-3 rounded-xl shadow flex flex-col items-center gap-2 hover:bg-green-50">
+                        <span class="text-xl">📅</span>
+                        <span class="text-[10px] font-semibold">Absensi Siswa</span>
+                    </button>
+                    <button onclick="alert('Buka Form Perizinan')" class="bg-white p-3 rounded-xl shadow flex flex-col items-center gap-2 hover:bg-green-50">
+                        <span class="text-xl">📝</span>
+                        <span class="text-[10px] font-semibold">Perizinan</span>
+                    </button>
+                    <button onclick="alert('Buka Modul Sarpras')" class="bg-white p-3 rounded-xl shadow flex flex-col items-center gap-2 hover:bg-green-50">
+                        <span class="text-xl">📦</span>
+                        <span class="text-[10px] font-semibold">Peminjaman</span>
+                    </button>
+                    <button onclick="alert('Buka Modul Konseling')" class="bg-white p-3 rounded-xl shadow flex flex-col items-center gap-2 hover:bg-green-50">
+                        <span class="text-xl">💬</span>
+                        <span class="text-[10px] font-semibold">Konseling</span>
+                    </button>
+                    <button onclick="alert('Buat Pengumuman Baru')" class="bg-white p-3 rounded-xl shadow flex flex-col items-center gap-2 hover:bg-green-50">
+                        <span class="text-xl">📢</span>
+                        <span class="text-[10px] font-semibold">Pengumuman</span>
+                    </button>
+                    <button onclick="alert('Kirim Pesan ke Orang Tua')" class="bg-white p-3 rounded-xl shadow flex flex-col items-center gap-2 hover:bg-green-50">
+                        <span class="text-xl">✉️</span>
+                        <span class="text-[10px] font-semibold">Pesan Ortu</span>
+                    </button>
+                </div>
+
+                <!-- Otorisasi Khusus Kepala Sekolah / Wewenang -->
+                <div id="admin-approvals" class="hidden">
+                    <h3 class="font-semibold text-gray-700 mt-4">Persetujuan & Wewenang</h3>
+                    <div class="bg-white p-4 rounded-xl shadow">
+                        <p class="text-sm text-gray-600">Daftar permintaan yang menunggu persetujuan Anda akan muncul di sini.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD ORANG TUA -->
+        <div id="view-parent-dashboard" class="hidden flex flex-col min-h-screen bg-gray-50 pb-20">
+            <header class="bg-blue-600 text-white p-4 shadow flex justify-between items-center">
+                <div>
+                    <h2 class="font-bold text-lg">Dasbor Orang Tua</h2>
+                    <p class="text-xs opacity-80" id="parent-name">Memuat...</p>
+                </div>
+                <button onclick="logout()" class="text-sm underline">Keluar</button>
+            </header>
+            
+            <div class="p-4 space-y-4">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-sm">
+                    <h3 class="font-bold text-blue-700">Pengumuman Terbaru</h3>
+                    <p class="text-sm text-gray-600 mt-1">Belum ada pengumuman terbaru dari sekolah.</p>
+                </div>
+                
+                <h3 class="font-semibold text-gray-700 mt-4">Pesan dari Anak</h3>
+                <div class="bg-white p-4 rounded-xl shadow text-center text-gray-500 text-sm">
+                    Tidak ada pesan surat yang diteruskan admin saat ini.
+                </div>
+            </div>
+        </div>
+
+        <!-- A4 Print Area Placeholder (Hidden from screen) -->
+        <div id="print-area" class="hidden absolute top-0 left-0 bg-white w-full">
+            <div class="kop-surat">
+                <h1 class="text-xl font-bold">SRT 2 KOTA PASURUAN</h1>
+                <p>Jl. Pendidikan No. 1, Kota Pasuruan | Telp: (0343) 123456</p>
+                <p class="italic">"Cerdas Bersama, Tumbuh Setara"</p>
+            </div>
+            <h2 id="print-title" class="text-center font-bold mb-4 uppercase underline">SURAT PERIZINAN</h2>
+            <div id="print-content" class="text-sm text-justify mb-10"></div>
+            <div class="flex justify-between mt-10">
+                <div class="text-center">
+                    <p>Menyetujui,</p>
+                    <p id="print-role1" class="font-bold mt-16">(Kepala UKSR)</p>
+                </div>
+                <div class="text-center">
+                    <p>Pemohon,</p>
+                    <p id="print-role2" class="font-bold mt-16">(Siswa)</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // CONFIG - Masukkan Web App URL dari Google Apps Script setelah deploy
+        const GAS_URL = "https://script.google.com/macros/s/GANTI_DENGAN_URL_DEPLOY_ANDA/exec";
+        
+        let html5QrCode;
+        let currentUser = null;
+
+        function showView(viewId) {
+            document.querySelectorAll('#app > div').forEach(div => {
+                if(div.id !== 'print-area') div.classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        function logout() {
+            currentUser = null;
+            showView('view-welcome');
+        }
+
+        async function handleManualLogin() {
+            const id = document.getElementById('inputId').value;
+            const pw = document.getElementById('inputPassword').value;
+            if(!id) return alert('Masukkan ID');
+            
+            // Simulasi Request (Dalam realita, gunakan fetch() ke GAS_URL)
+            // fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'login', id, password: pw, isQr: false }) })
+            
+            alert('Mengirim request login ke server...');
+            // Dummy bypass untuk demonstrasi
+            if(id === "19900101") {
+                currentUser = { role: "admin", data: { nama: "Moch Ilham Fikril Islami", wewenang: "Kepsek,Humas,Sarpras,UKSR" } };
+                document.getElementById('admin-name').innerText = currentUser.data.nama;
+                document.getElementById('admin-approvals').classList.remove('hidden');
+                showView('view-admin-dashboard');
+            } else {
+                alert('Gunakan NIP Dummy: 19900101 (Kepsek) untuk demo admin.');
+            }
+        }
+
+        function startQrScanner() {
+            document.getElementById('qr-reader').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("qr-reader");
+            
+            // Konfigurasi agar FPS tidak drop (resolusi rendah & fps dilimit)
+            const config = { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 };
+            
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                (decodedText, decodedResult) => {
+                    html5QrCode.stop();
+                    document.getElementById('qr-reader').classList.add('hidden');
+                    alert("QR Terdeteksi: " + decodedText);
+                    // Kirim fetch ke GAS dengan isQr: true
+                    // Simulasi login sukses
+                    currentUser = { role: "admin", data: { nama: "User Scan", wewenang: "" } };
+                    document.getElementById('admin-name').innerText = currentUser.data.nama;
+                    showView('view-admin-dashboard');
+                },
+                (errorMessage) => { /* abaikan error scanning tiap frame */ }
+            ).catch(err => {
+                alert("Error membuka kamera: " + err);
+            });
+        }
+
+        // Fungi helper untuk cetak (Print A4)
+        function cetakDokumen(title, contentHTML) {
+            document.getElementById('print-title').innerText = title;
+            document.getElementById('print-content').innerHTML = contentHTML;
+            window.print();
+        }
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Diperlukan file sw.js untuk PWA lengkap
+                // navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
+</body>
+</html>
