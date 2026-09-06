@@ -235,7 +235,7 @@
   </div>
 
   <script>
-    const API_URL = "URL_WEB_APP_GAS_ANDA"; // Masukkan URL deployment dari Code.gs
+    const API_URL = "https://script.google.com/macros/s/AKfycbwO13pWgxuG9leCONp1ntnx3qzN55YEQsh2LUXKEHrTC8pT8CXRC52k3NDALeMiguRq/exec"; // Masukkan URL deployment dari Code.gs
     let html5QrCode;
     let currentUser = null;
 
@@ -356,7 +356,7 @@
     }
 
     async function processLogin(cred, pwd, isQR) {
-      if(API_URL === "URL_WEB_APP_GAS_ANDA") {
+      if(API_URL === "https://script.google.com/macros/s/AKfycbwO13pWgxuG9leCONp1ntnx3qzN55YEQsh2LUXKEHrTC8pT8CXRC52k3NDALeMiguRq/exec") {
         alert("Mohon masukkan URL API Google Apps Script di kode HTML.");
         return;
       }
