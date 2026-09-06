@@ -1,1 +1,645 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal SRT 2 Kota Pasuruan</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- HTML5 QR Code Scanner (Optimized for performance) -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    /* Print Setup for A4 Document with Letterhead */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area {
+        position: absolute;
+        left: 0; top: 0; width: 210mm; min-height: 297mm;
+        padding: 20mm; background: white;
+      }
+      .no-print { display: none !important; }
+    }
+    .scanner-container { max-width: 400px; margin: auto; overflow: hidden; border-radius: 8px; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
 
+  <!-- ================= UNAUTHENTICATED (LOGIN) ================= -->
+  <div id="login-view" class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+      <!-- Placeholder Logo -->
+      <div class="w-24 h-24 bg-indigo-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">SRT2</div>
+      <h1 class="text-2xl font-bold text-gray-800 mb-1">Selamat datang di portal SRT 2 Kota Pasuruan</h1>
+      <p class="text-sm text-gray-500 mb-6 italic">"Cerdas Bersama, Tumbuh Setara"</p>
+      
+      <div class="space-y-4">
+        <button onclick="toggleQRLogin()" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
+          <i class="fa-solid fa-qrcode mr-2"></i> Scan QR (Semua Pengguna)
+        </button>
+
+        <div id="qr-reader" class="scanner-container hidden"></div>
+
+        <div class="relative flex py-2 items-center">
+          <div class="flex-grow border-t border-gray-300"></div>
+          <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">Atau Admin Login</span>
+          <div class="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        <input type="text" id="nip" placeholder="NIP / Kredensial" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+        <input type="password" id="password" placeholder="Password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+        
+        <button onclick="manualLogin()" class="w-full bg-gray-800 text-white p-3 rounded-lg font-semibold hover:bg-gray-900 transition">
+          Masuk
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= AUTHENTICATED (MAIN APP) ================= -->
+  <div id="app-view" class="hidden min-h-screen flex flex-col md:flex-row">
+    
+    <!-- Sidebar -->
+    <div class="w-full md:w-64 bg-indigo-800 text-white flex flex-col">
+      <div class="p-4 text-center border-b border-indigo-700">
+        <div class="w-16 h-16 bg-white rounded-full mx-auto mb-2 flex items-center justify-center text-indigo-800 font-bold">SRT2</div>
+        <h2 class="font-bold" id="sidebar-name">Nama Pengguna</h2>
+        <p class="text-xs text-indigo-300" id="sidebar-role">Role</p>
+      </div>
+      <nav class="flex-1 overflow-y-auto p-4 space-y-2" id="sidebar-nav">
+        <!-- Dinamis Berdasarkan Role -->
+      </nav>
+      <div class="p-4 border-t border-indigo-700">
+        <button onclick="logout()" class="w-full bg-red-500 hover:bg-red-600 p-2 rounded text-sm font-semibold">
+          <i class="fa-solid fa-sign-out-alt mr-2"></i> Keluar
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6 overflow-y-auto" id="main-content">
+<!-- VIEW ADMIN: Mengirim Pesan ke Ortu -->
+<div id="view-kirim-pesan" class="view-section hidden">
+  <h2 class="text-2xl font-bold mb-4">Kirim Pesan ke Orang Tua</h2>
+  <div class="bg-white p-6 rounded shadow max-w-lg">
+    <p class="text-sm text-gray-600 mb-4">Pilih siswa dan potret/unggah foto surat mereka untuk dikirimkan kepada orang tua.</p>
+    
+    <label class="block text-sm font-medium text-gray-700 mb-1">Cari Siswa</label>
+    <input type="text" id="input-pesan-nisn" placeholder="Masukkan NISN..." class="w-full p-2 border rounded mb-4 focus:ring-2 focus:ring-indigo-500">
+    
+    <label class="block text-sm font-medium text-gray-700 mb-1">Foto Surat Siswa</label>
+    <!-- Atribut 'capture' agar di HP otomatis membuka kamera -->
+    <input type="file" id="input-pesan-foto" accept="image/*" capture="environment" class="w-full p-2 border rounded mb-4">
+    
+    <button onclick="kirimPesanAdmin()" id="btn-kirim-pesan" class="w-full bg-indigo-600 text-white font-semibold px-4 py-2 rounded hover:bg-indigo-700">
+      Kirim ke Orang Tua <i class="fa-solid fa-paper-plane ml-2"></i>
+    </button>
+  </div>
+</div>
+
+<!-- VIEW ORANG TUA: Daftar Pesan dan Balas Pesan -->
+<div id="view-pesan-ortu" class="view-section hidden">
+  <h2 class="text-2xl font-bold mb-4">Kotak Masuk Surat Anak</h2>
+  <button onclick="loadPesanOrtu()" class="mb-4 bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-sm">
+    <i class="fa-solid fa-sync"></i> Segarkan Pesan
+  </button>
+  
+  <div id="container-pesan-ortu" class="space-y-4">
+    <!-- List pesan foto dan form balasan dimuat di sini -->
+  </div>
+</div>
+      <!-- Dashboard Admin Default -->
+      <div id="view-dashboard" class="view-section">
+        <h2 class="text-2xl font-bold mb-4">Dasbor Indikator Utama</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded shadow border-l-4 border-red-500">
+            <p class="text-sm text-gray-500">Siswa Tidak Hadir</p>
+            <h3 class="text-2xl font-bold" id="dash-absen">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-500">
+            <p class="text-sm text-gray-500">Peminjaman Hari Ini</p>
+            <h3 class="text-2xl font-bold" id="dash-pinjam">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded shadow border-l-4 border-blue-500">
+            <p class="text-sm text-gray-500">Perizinan Siswa Aktif</p>
+            <h3 class="text-2xl font-bold" id="dash-izin">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded shadow border-l-4 border-green-500">
+            <p class="text-sm text-gray-500">Stok Barang (Opsik)</p>
+            <h3 class="text-2xl font-bold" id="dash-stok">0</h3>
+          </div>
+        </div>
+      </div>
+      
+    <!-- VIEW ADMIN (SCANNER & MANUAL) -->
+<div id="view-absensi" class="view-section hidden">
+  <h2 class="text-2xl font-bold mb-4">Pemindai Absensi (Admin/Guru)</h2>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Panel Scanner Kamera -->
+    <div class="bg-white p-4 rounded shadow flex flex-col items-center">
+      <div id="reader" style="width: 100%; max-width: 400px; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden;" class="mb-4"></div>
+      
+      <div class="w-full max-w-sm mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Absensi (Untuk Scanner)</label>
+        <select id="scan-jenis-absen" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-500">
+          <option value="Hadir (Kegiatan Asrama)">Hadir (Kegiatan Asrama)</option>
+          <option value="Pulang Sekolah">Hadir (Pulang Sekolah)</option>
+          <option value="Jam Malam">Cek Jam Malam</option>
+        </select>
+      </div>
+      <!-- Tempat munculnya pop-up notifikasi hasil scan -->
+      <div id="scan-result-alert" class="w-full hidden p-3 rounded text-center font-semibold text-sm"></div>
+    </div>
+
+    <!-- Panel Input Manual -->
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="text-lg font-semibold mb-3 border-b pb-2">Input Absensi Manual</h3>
+      <p class="text-xs text-gray-500 mb-4">Gunakan ini jika siswa sakit, izin khusus, atau ID Card tertinggal.</p>
+      
+      <label class="block text-sm font-medium text-gray-700 mb-1">NISN / Barcode Siswa</label>
+      <input type="text" id="manual-nisn" placeholder="Masukkan NISN..." class="w-full p-2 border rounded mb-3">
+      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Status Kehadiran</label>
+      <select id="manual-jenis" class="w-full p-2 border rounded mb-3">
+        <option value="Hadir (Manual)">Hadir (Manual)</option>
+        <option value="Sakit">Sakit</option>
+        <option value="Izin">Izin Khusus</option>
+        <option value="Alfa">Tanpa Keterangan (Alfa)</option>
+      </select>
+      
+      <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan (Opsional)</label>
+      <input type="text" id="manual-ket" placeholder="Misal: Istirahat di UKS / Pulang Kampung" class="w-full p-2 border rounded mb-4">
+      
+      <button onclick="submitAbsenManual()" id="btn-absen-manual" class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 font-semibold">
+        Catat Absensi <i class="fa-solid fa-save ml-1"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW SISWA/ORTU: Histori Absensi -->
+<div id="view-histori-absen" class="view-section hidden">
+  <h2 class="text-2xl font-bold mb-4">Catatan Kehadiran</h2>
+  <button onclick="loadHistoriAbsensi()" class="mb-4 bg-indigo-100 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-200 text-sm font-medium">
+    <i class="fa-solid fa-sync"></i> Perbarui Data
+  </button>
+  
+  <div class="bg-white rounded shadow overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left text-sm whitespace-nowrap">
+        <thead class="uppercase tracking-wider border-b-2 bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 border-x border-gray-200">Waktu</th>
+            <th id="col-nama-anak" class="px-6 py-3 border-x border-gray-200 hidden">Nama Siswa</th>
+            <th class="px-6 py-3 border-x border-gray-200">Status</th>
+            <th class="px-6 py-3 border-x border-gray-200">Keterangan</th>
+          </tr>
+        </thead>
+        <tbody id="table-body-histori-absen" class="divide-y divide-gray-200">
+          <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+      <!-- Contoh Form A4 Printable: Perizinan -->
+      <div id="view-perizinan" class="view-section hidden">
+        <h2 class="text-2xl font-bold mb-4">Form Perizinan Siswa</h2>
+        <div class="bg-white p-4 rounded shadow">
+          <input type="text" placeholder="Cari / Scan NISN Siswa..." class="w-full p-2 border rounded mb-2">
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <input type="datetime-local" class="p-2 border rounded" placeholder="Mulai">
+            <input type="datetime-local" class="p-2 border rounded" placeholder="Kembali">
+          </div>
+          <textarea placeholder="Keperluan Izin (Jika rombongan, entri disatukan untuk efisiensi)" class="w-full p-2 border rounded mb-4"></textarea>
+          <button onclick="ajukanIzin()" class="bg-indigo-600 text-white px-4 py-2 rounded">Ajukan ke Kepala UKSR</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Hidden Print Area for BAST / Formulir Resmi -->
+  <div id="print-area" class="hidden">
+    <div class="text-center border-b-2 border-black pb-4 mb-4">
+      <h1 class="font-bold text-xl">PEMERINTAH KOTA PASURUAN</h1>
+      <h2 class="font-bold text-lg">SRT 2 KOTA PASURUAN</h2>
+      <p class="text-sm italic">"Cerdas Bersama, Tumbuh Setara"</p>
+    </div>
+    <div id="print-content" class="text-sm leading-relaxed">
+      <!-- Konten dicetak masuk sini -->
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "URL_WEB_APP_GAS_ANDA"; // Masukkan URL deployment dari Code.gs
+    let html5QrCode;
+    let currentUser = null;
+
+    // ----- INISIALISASI & ROUTING -----
+    window.onload = () => {
+      const stored = localStorage.getItem('srt2_user');
+      if (stored) {
+        currentUser = JSON.parse(stored);
+        showApp();
+      }
+    };
+
+    function showApp() {
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('app-view').classList.remove('hidden');
+      document.getElementById('sidebar-name').innerText = currentUser.nama;
+      document.getElementById('sidebar-role').innerText = currentUser.role;
+      
+      buildNavigation();
+    }
+
+    function logout() {
+      localStorage.removeItem('srt2_user');
+      location.reload();
+    }
+
+    function switchView(viewId) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(viewId);
+      if(target) target.classList.remove('hidden');
+    }
+
+    function buildNavigation() {
+      const nav = document.getElementById('sidebar-nav');
+      nav.innerHTML = '';
+      
+      const menuAdmin = [
+        { name: 'Dasbor', view: 'view-dashboard', icon: 'fa-home' },
+        { name: 'Absensi Scanner', view: 'view-absensi', icon: 'fa-camera' },
+        { name: 'Pengumuman', view: 'view-pengumuman', icon: 'fa-bullhorn' },
+        { name: 'Perizinan', view: 'view-perizinan', icon: 'fa-file-signature' },
+        { name: 'Konseling', view: 'view-konseling', icon: 'fa-hands-helping' },
+        { name: 'Peminjaman BAST', view: 'view-pinjam', icon: 'fa-box-open' },
+        { name: 'Distribusi Barang', view: 'view-distribusi', icon: 'fa-truck' },
+        { name: 'Data Casis/Siswa', view: 'view-datasiswa', icon: 'fa-user-graduate' },
+        { name: 'Profil', view: 'view-profil', icon: 'fa-id-badge' }
+      ];
+
+      const menuOrtu = [
+        { name: 'Pengumuman', view: 'view-pengumuman', icon: 'fa-bullhorn' },
+        { name: 'Pesan Anak', view: 'view-pesan', icon: 'fa-envelope' }
+      ];
+
+      const menu = currentUser.role === 'Admin' ? menuAdmin : menuOrtu;
+      
+      menu.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-2 rounded hover:bg-indigo-700 transition flex items-center";
+        btn.innerHTML = `<i class="fa-solid ${item.icon} w-6"></i> ${item.name}`;
+        btn.onclick = () => switchView(item.view);
+        nav.appendChild(btn);
+      });
+
+      // Tambahan Persetujuan untuk pemegang wewenang
+      if (currentUser.wewenang && (currentUser.wewenang.includes('Kepala Sekolah') || currentUser.wewenang.includes('Sarpras') || currentUser.wewenang.includes('Humas') || currentUser.wewenang.includes('Kepala UKSR'))) {
+        const btnSetuju = document.createElement('button');
+        btnSetuju.className = "w-full text-left p-2 rounded bg-yellow-600 hover:bg-yellow-700 transition flex items-center mt-4";
+        btnSetuju.innerHTML = `<i class="fa-solid fa-check-double w-6"></i> Persetujuan Wewenang`;
+        btnSetuju.onclick = () => switchView('view-persetujuan');
+        nav.appendChild(btnSetuju);
+      }
+    }
+
+    // ----- QR SCANNER (OPTIMASI FPS & RESOURCE) -----
+    function toggleQRLogin() {
+      const reader = document.getElementById('qr-reader');
+      reader.classList.toggle('hidden');
+      if (!reader.classList.contains('hidden')) {
+        // Konfigurasi FPS rendah (10) untuk mencegah drop frame di smartphone murah
+        html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 30, qrbox: { width: 250, height: 250 } },
+          (decodedText, decodedResult) => {
+            html5QrCode.stop();
+            processLogin(decodedText, null, true);
+          },
+          (errorMessage) => { /* abaikan error scanning per frame */ }
+        );
+      } else {
+        if(html5QrCode) html5QrCode.stop();
+      }
+    }
+
+    function startContinuousScan() {
+      const reader = document.getElementById('continuous-reader');
+      reader.classList.remove('hidden');
+      if(!html5QrCode) html5QrCode = new Html5Qrcode("continuous-reader");
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 300, height: 300 } },
+        (decodedText) => {
+          // Bunyikan beep dan catat absensi
+          const res = document.getElementById('scan-results');
+          res.innerHTML = `<div class='p-2 bg-green-200 border-l-4 border-green-600 mb-1'>Terekam: ${decodedText}</div>` + res.innerHTML;
+          // Di sini tambahkan fetch API untuk simpan absensi ke Apps Script
+        },
+        () => {}
+      );
+    }
+
+    // ----- API CALLS & FORM LOGIC -----
+    function manualLogin() {
+      const nip = document.getElementById('nip').value;
+      const pwd = document.getElementById('password').value;
+      processLogin(nip, pwd, false);
+    }
+
+    async function processLogin(cred, pwd, isQR) {
+      if(API_URL === "URL_WEB_APP_GAS_ANDA") {
+        alert("Mohon masukkan URL API Google Apps Script di kode HTML.");
+        return;
+      }
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'login', credential: cred, password: pwd, isQR: isQR }),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+        const res = await response.json();
+        
+        if (res.status === 'success') {
+          localStorage.setItem('srt2_user', JSON.stringify(res.user));
+          currentUser = res.user;
+          showApp();
+        } else {
+          alert("Gagal Login: " + res.message);
+        }
+      } catch (e) {
+        alert("Kesalahan jaringan saat login.");
+      }
+    }
+
+    function ajukanIzin() {
+      alert("Form Perizinan tersimpan. Menunggu persetujuan Kepala UKSR.");
+      // Cetak surat (Mockup)
+      document.getElementById('print-area').classList.remove('hidden');
+      document.getElementById('print-content').innerHTML = `
+        <h3 class="text-center font-bold mb-4">SURAT IZIN SISWA</h3>
+        <p>Dengan ini menerangkan bahwa siswa dengan rincian di bawah ini telah diizinkan untuk meninggalkan area asrama SRT 2 Kota Pasuruan:</p>
+        <br>
+        <p><strong>Nama/NISN:</strong> ${currentUser.nama}</p>
+        <p><strong>Keperluan:</strong> Izin Resmi Tercatat</p>
+        <br><br>
+        <div class="flex justify-between mt-10">
+          <div class="text-center">Pemohon,<br><br>[QR Code Siswa]</div>
+          <div class="text-center">Kepala UKSR,<br><br>[QR Code TTD]</div>
+        </div>
+      `;
+      window.print();
+      document.getElementById('print-area').classList.add('hidden');
+    }
+// --- ADMIN KIRIM PESAN ---
+async function kirimPesanAdmin() {
+  const nisn = document.getElementById('input-pesan-nisn').value;
+  const fotoInput = document.getElementById('input-pesan-foto');
+  const btnKirim = document.getElementById('btn-kirim-pesan');
+  
+  if (!nisn) { alert("Silakan masukkan NISN/Nama siswa"); return; }
+  if (fotoInput.files.length === 0) { alert("Ambil/unggah foto surat terlebih dahulu"); return; }
+
+  btnKirim.disabled = true;
+  btnKirim.innerText = "Mengirim...";
+
+  // Konversi file gambar ke Base64 Data URL untuk disimpan di Spreadsheet
+  const file = fotoInput.files[0];
+  const reader = new FileReader();
+  
+  reader.onloadend = async function() {
+    const base64Foto = reader.result;
+    
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'kirimPesanKeOrtu', nisnSiswa: nisn, fotoSurat: base64Foto }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      const res = await response.json();
+      
+      if (res.status === 'success') {
+        alert("Pesan berhasil dikirim!");
+        document.getElementById('input-pesan-nisn').value = '';
+        document.getElementById('input-pesan-foto').value = '';
+      } else { alert("Gagal: " + res.message); }
+    } catch (e) { alert("Kesalahan jaringan"); } 
+    finally {
+      btnKirim.disabled = false;
+      btnKirim.innerHTML = 'Kirim ke Orang Tua <i class="fa-solid fa-paper-plane ml-2"></i>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// --- ORANG TUA LOAD & BALAS PESAN ---
+async function loadPesanOrtu() {
+  const container = document.getElementById('container-pesan-ortu');
+  container.innerHTML = '<p class="text-gray-500 italic">Memuat pesan...</p>';
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'getPesanOrtu', niwOrtu: currentUser.id }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    const res = await response.json();
+    
+    if (res.status === 'success') {
+      container.innerHTML = '';
+      if(res.data.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 italic">Belum ada pesan dari pihak asrama.</p>';
+        return;
+      }
+      // Render pesan
+      res.data.forEach(p => {
+        const isDibalas = p.balasan && p.balasan.trim() !== "";
+        let html = `
+          <div class="bg-white rounded-lg shadow p-4 border border-gray-100">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="font-bold text-indigo-800">Surat dari: ${p.namaSiswa}</h3>
+              <span class="text-xs text-gray-400">${p.waktu}</span>
+            </div>
+            <img src="${p.fotoSurat}" class="max-w-full h-auto rounded border mb-4" style="max-height: 250px;">
+            <div class="bg-gray-50 p-3 rounded">
+        `;
+        
+        if (isDibalas) {
+          html += `<p class="text-sm text-green-700 font-semibold mb-1">Telah Dibalas:</p><p class="text-sm text-gray-700">${p.balasan}</p>`;
+        } else {
+          html += `
+            <textarea id="balas-${p.id}" placeholder="Ketik balasan untuk anak Anda di sini..." class="w-full p-2 border rounded text-sm mb-2"></textarea>
+            <button onclick="kirimBalasanOrtu('${p.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Kirim Balasan Teks</button>
+          `;
+        }
+        html += `</div></div>`;
+        container.innerHTML += html;
+      });
+    }
+  } catch (e) { container.innerHTML = `<p class="text-red-500">Kesalahan jaringan.</p>`; }
+}
+
+async function kirimBalasanOrtu(idPesan) {
+  const teks = document.getElementById(`balas-${idPesan}`).value;
+  if (!teks.trim()) { alert("Balasan tidak boleh kosong"); return; }
+  
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'balasPesanOrtu', idPesan: idPesan, teksBalasan: teks }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+  const res = await response.json();
+  if (res.status === 'success') {
+    alert("Balasan teks berhasil dikirim.");
+    loadPesanOrtu(); // Render ulang kotak masuk
+  }
+}
+// --- ADMIN: SCANNER & MANUAL ABSENSI ---
+let isProcessingScan = false; 
+
+// *Fungsi onScanSuccess ini menimpa (overwrite) fungsi onScanSuccess sebelumnya*
+function onScanSuccess(decodedText, decodedResult) {
+  if (isProcessingScan) return; // Mencegah scan berulang (spamming) ke database
+  isProcessingScan = true;
+  
+  if(html5QrcodeScanner) html5QrcodeScanner.pause(); // Hentikan kamera sementara
+  
+  const nisnScanned = decodedText.trim();
+  const jenisAbsen = document.getElementById('scan-jenis-absen').value;
+  
+  const alertBox = document.getElementById('scan-result-alert');
+  alertBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+  alertBox.classList.add('block', 'bg-blue-100', 'text-blue-800');
+  alertBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+  
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'submitAbsensi', nisn: nisnScanned, jenisAbsensi: jenisAbsen, keterangan: "Scan QR", waktu: new Date().toISOString() }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  })
+  .then(res => res.json())
+  .then(res => {
+    alertBox.classList.remove('bg-blue-100', 'text-blue-800');
+    if (res.status === 'success') {
+      playBeep(); // Bunyi bip tanda berhasil
+      alertBox.classList.add('bg-green-100', 'text-green-800');
+      alertBox.innerHTML = '<i class="fa-solid fa-check-circle"></i> ' + res.message;
+    } else {
+      alertBox.classList.add('bg-red-100', 'text-red-800');
+      alertBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + res.message;
+    }
+  })
+  .catch(err => {
+    alertBox.classList.remove('bg-blue-100', 'text-blue-800');
+    alertBox.classList.add('bg-red-100', 'text-red-800');
+    alertBox.innerHTML = 'Gagal menghubungi server.';
+  })
+  .finally(() => {
+    // Jeda 2.5 detik sebelum scanner bisa membaca QR lagi
+    setTimeout(() => {
+      alertBox.classList.add('hidden');
+      isProcessingScan = false;
+      if(html5QrcodeScanner) html5QrcodeScanner.resume();
+    }, 2500);
+  });
+}
+
+function playBeep() {
+  const context = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = context.createOscillator();
+  const gainNode = context.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(context.destination);
+  oscillator.type = 'sine';
+  oscillator.frequency.value = 800; 
+  gainNode.gain.setValueAtTime(0.1, context.currentTime); 
+  oscillator.start(context.currentTime);
+  oscillator.stop(context.currentTime + 0.1); 
+}
+
+async function submitAbsenManual() {
+  const nisn = document.getElementById('manual-nisn').value;
+  const jenis = document.getElementById('manual-jenis').value;
+  const ket = document.getElementById('manual-ket').value;
+  const btn = document.getElementById('btn-absen-manual');
+  
+  if (!nisn) { alert("NISN tidak boleh kosong"); return; }
+  
+  btn.disabled = true;
+  btn.innerText = "Menyimpan...";
+  
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'submitAbsensi', nisn: nisn, jenisAbsensi: jenis, keterangan: ket, waktu: new Date().toISOString() }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  }).then(r => r.json());
+  
+  if (res.status === 'success') {
+    alert(res.message);
+    document.getElementById('manual-nisn').value = '';
+    document.getElementById('manual-ket').value = '';
+  } else { alert("Gagal: " + res.message); }
+  
+  btn.disabled = false;
+  btn.innerHTML = 'Catat Absensi <i class="fa-solid fa-save ml-1"></i>';
+}
+
+// --- SISWA/ORTU: MELIHAT HISTORI ABSEN ---
+async function loadHistoriAbsensi() {
+  const tbody = document.getElementById('table-body-histori-absen');
+  const colNama = document.getElementById('col-nama-anak');
+  tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</td></tr>';
+  
+  const isOrtu = currentUser.role === 'orangtua';
+  // Jika Ortu, tampilkan kolom Nama Anak, jika Siswa, sembunyikan kolomnya.
+  isOrtu ? colNama.classList.remove('hidden') : colNama.classList.add('hidden');
+
+  const actionPayload = isOrtu ? 
+    { action: 'getAbsensiOrtu', niwOrtu: currentUser.id } : 
+    { action: 'getHistoriAbsensi', nisn: currentUser.id };
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(actionPayload),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    }).then(r => r.json());
+    
+    if (res.status === 'success') {
+      if (res.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 italic">Belum ada catatan kehadiran.</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = '';
+      res.data.forEach(item => {
+        let statusColor = "text-gray-800";
+        if(item.jenis.includes("Sakit")) statusColor = "text-yellow-600 font-semibold";
+        if(item.jenis.includes("Izin")) statusColor = "text-blue-600 font-semibold";
+        if(item.jenis.includes("Alfa")) statusColor = "text-red-600 font-bold";
+        
+        const namaCell = isOrtu ? `<td class="px-6 py-4 border-x border-gray-200 font-medium">${item.namaAnak}</td>` : '';
+        
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 border-x border-gray-200 text-xs text-gray-500">${item.waktu}</td>
+            ${namaCell}
+            <td class="px-6 py-4 border-x border-gray-200 ${statusColor}">${item.jenis}</td>
+            <td class="px-6 py-4 border-x border-gray-200 text-xs text-gray-600">${item.keterangan || "-"}</td>
+          </tr>`;
+      });
+    }
+  } catch (e) { tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Gagal terhubung ke server.</td></tr>`; }
+}
+  </script>
+</body>
+</html>
