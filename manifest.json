@@ -1,19 +1,18 @@
 {
-  "name": "Portal Akademik & Asrama SRT 2 Kota Pasuruan",
-  "short_name": "Portal SRT2",
-  "description": "Superapp sekolah berbasis PWA untuk manajemen siswa, aset (Opsik), dan administrasi asrama SRT 2 Kota Pasuruan. Cerdas Bersama, Tumbuh Setara.",
-  "start_url": "./Index.html",
+  "name": "Portal SRT 2 Kota Pasuruan",
+  "short_name": "SRT2 Pasuruan",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#4338ca",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
   "icons": [
     {
-      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Google_Apps_Script.svg/512px-Google_Apps_Script.svg.png",
+      "src": "https://via.placeholder.com/192/16a34a/ffffff?text=SRT2",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Google_Apps_Script.svg/512px-Google_Apps_Script.svg.png",
+      "src": "https://via.placeholder.com/512/16a34a/ffffff?text=SRT2",
       "sizes": "512x512",
       "type": "image/png"
     }
