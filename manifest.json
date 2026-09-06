@@ -2,7 +2,7 @@
   "name": "Portal Akademik & Asrama SRT 2 Kota Pasuruan",
   "short_name": "Portal SRT2",
   "description": "Superapp sekolah berbasis PWA untuk manajemen siswa, aset (Opsik), dan administrasi asrama SRT 2 Kota Pasuruan. Cerdas Bersama, Tumbuh Setara.",
-  "start_url": "./index.html",
+  "start_url": "./Index.html",
   "display": "standalone",
   "background_color": "#f9fafb",
   "theme_color": "#4338ca",
