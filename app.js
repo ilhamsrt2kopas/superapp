@@ -218,8 +218,8 @@ function screenLogin() {
       <div class="login-card">
         <img src="${CONFIG.LOGO_URL}" class="school-logo" alt="Logo Sekolah">
         <div class="login-tabs">
-          <button class="active" data-tab="password">NIP &amp; Password</button>
-          <button data-tab="qr">Scan QR</button>
+          <button class="active" data-tab="password">Pegawai Sekolah</button>
+          <button data-tab="qr">Orang Tua Siswa</button>
         </div>
         <div id="login-body"></div>
       </div>
@@ -234,7 +234,7 @@ function screenLogin() {
         <div class="field"><label>NIP</label><input id="in-nip" type="text" inputmode="numeric"></div>
         <div class="field"><label>Password</label><input id="in-pass" type="password"></div>
         <button class="btn" id="btn-login-pass">Masuk</button>
-        <p style="font-size:12px;color:var(--muted);margin-top:10px;">Khusus Kepala Sekolah / Guru / Pegawai</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px;">Hubungi admin jika terkendala</p>
       </div>
     `));
     qs('#btn-login-pass', body).onclick = async () => {
