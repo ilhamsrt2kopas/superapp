@@ -1,20 +1,15 @@
 {
-  "name": "SRT 2 Kota Pasuruan",
-  "short_name": "SRT 2",
+  "name": "Portal SRT 2 Kota Pasuruan",
+  "short_name": "SRT2 Portal",
+  "description": "Superapp sekolah SRT 2 Kota Pasuruan — Cerdas Bersama, Tumbuh Setara",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1e40af",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "https://via.placeholder.com/192x192.png?text=SRT2",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://via.placeholder.com/512x512.png?text=SRT2",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
