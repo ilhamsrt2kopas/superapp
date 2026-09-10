@@ -1,4 +1,4 @@
-const CACHE_NAME = 'srt2-portal-v1';
+const CACHE_NAME = 'portal-sr-v1';
 const SHELL_FILES = ['./', './index.html', './style.css', './app.js', './manifest.json'];
 
 self.addEventListener('install', (e) => {
