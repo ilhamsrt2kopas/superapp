@@ -1,34 +1,116 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Portal SRT 2 Kota Pasuruan</title>
-<meta name="theme-color" content="#0f172a">
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.png">
-<link rel="icon" href="./icon-192.png">
-<!-- Font modern -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="./style.css">
-
-<!-- Generate QR (kartu login, tanda tangan QR, dsb) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<!-- Scan QR pakai kamera -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Sekolah Rakyat Kota Pasuruan</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Inter & Phosphor Icons untuk kesan modern -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
-<div id="app"></div>
-<div id="print-area"></div>
+    <div class="app-container">
+        <!-- Sidebar Navigasi -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Portal SRT 2</h2>
+                <button class="close-btn" id="closeSidebar"><i class="ph ph-x"></i></button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active"><i class="ph ph-squares-four"></i> Dashboard</a>
+                <a href="#" class="nav-item"><i class="ph ph-users"></i> Penerimaan Siswa</a>
+                <a href="#" class="nav-item"><i class="ph ph-qr-code"></i> Scanner QR</a>
+                <a href="#" class="nav-item"><i class="ph ph-file-text"></i> Laporan</a>
+            </nav>
+        </aside>
 
-<script src="./app.js"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(function(e){ console.warn('SW gagal', e); });
-  }
-</script>
+        <!-- Area Konten Utama -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-btn" id="openSidebar"><i class="ph ph-list"></i></button>
+                    <h1>Dashboard Utama</h1>
+                </div>
+                <div class="topbar-right">
+                    <button class="theme-toggle" id="themeToggle"><i class="ph ph-moon"></i></button>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=Admin+SRT&background=2563eb&color=fff" alt="Profil">
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <!-- Banner Sambutan -->
+                <section class="welcome-banner">
+                    <div>
+                        <h2>Sekolah Rakyat Kota Pasuruan</h2>
+                        <p>Jl. Erlangga Selatan No.17 Kota Pasuruan</p>
+                    </div>
+                </section>
+
+                <!-- Grid Statistik -->
+                <section class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="ph ph-users"></i></div>
+                        <div class="stat-info">
+                            <h3>Total Siswa / Casis</h3>
+                            <p>312</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="ph ph-clipboard-text"></i></div>
+                        <div class="stat-info">
+                            <h3>Permintaan Masuk</h3>
+                            <p>15</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="ph ph-check-circle"></i></div>
+                        <div class="stat-info">
+                            <h3>Kehadiran Hari Ini</h3>
+                            <p>98%</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tabel Aktivitas Ringan -->
+                <section class="recent-activity">
+                    <div class="section-header">
+                        <h3>Aktivitas Terbaru</h3>
+                        <button class="btn-primary">Lihat Semua</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Keterangan</th>
+                                    <th>Waktu</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Ahmad Budi</td>
+                                    <td>Absensi Pagi</td>
+                                    <td>07:15 WIB</td>
+                                    <td><span class="badge success">Hadir</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Siti Aminah</td>
+                                    <td>Pendaftaran Baru</td>
+                                    <td>08:30 WIB</td>
+                                    <td><span class="badge pending">Diproses</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
