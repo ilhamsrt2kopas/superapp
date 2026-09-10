@@ -1,7 +1,7 @@
 {
-  "name": "Portal SRT 2 Kota Pasuruan",
-  "short_name": "SRT2 Portal",
-  "description": "Superapp sekolah SRT 2 Kota Pasuruan — Cerdas Bersama, Tumbuh Setara",
+  "name": "Portal Sekolah Rakyat Kota Pasuruan",
+  "short_name": "SR Kota Pasuruan",
+  "description": "Sekolah Rakyat Kota Pasuruan — Cerdas Bersama, Tumbuh Setara",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
