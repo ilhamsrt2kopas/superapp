@@ -3,12 +3,21 @@
    SPA vanilla JS. Backend: Google Apps Script Web App (lihat apps-script/).
    ========================================================================== */
 
+/* ================= Tema (mode terang/gelap) ================= */
+const THEME_KEY = 'srt2_theme';
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+}
+function getTheme() { return localStorage.getItem(THEME_KEY) || 'light'; }
+applyTheme(getTheme());
+
 const CONFIG = {
   // GANTI dengan URL deployment Web App Apps Script kamu (Deploy > New deployment > Web app)
   API_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_DEPLOYMENT_ID/exec',
   SCHOOL_NAME: 'SRT 2 Kota Pasuruan',
   TAGLINE: 'Cerdas Bersama, Tumbuh Setara',
-  LOGO_URL: './icon-192.png'
+  LOGO_URL: './icons/icon-192.png'
 };
 
 const S = {
@@ -43,6 +52,19 @@ function toast(msg) {
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 3000);
+}
+
+// Grafik batang horizontal sederhana (tanpa library) untuk menampilkan perbandingan stok barang.
+function barChartHtml(items) {
+  if (!items || items.length === 0) return '';
+  const top = items.slice().sort((a, b) => Number(b.Stok) - Number(a.Stok)).slice(0, 6);
+  const max = Math.max(1, ...top.map((x) => Number(x.Stok) || 0));
+  return `<div class="bar-chart">${top.map((x) => `
+    <div class="bar-chart-row">
+      <span class="bar-chart-label">${x.NamaBarang}</span>
+      <div class="bar-chart-track"><div class="bar-chart-fill" style="width:${Math.max(4, (Number(x.Stok) / max) * 100)}%;"></div></div>
+      <span class="bar-chart-value">${x.Stok}</span>
+    </div>`).join('')}</div>`;
 }
 
 function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
@@ -289,6 +311,7 @@ function screenShell(route) {
         <div class="topbar">
           <button class="hamburger" id="btn-menu">☰</button>
           <div class="topbar-title">${currentLabel}</div>
+          <button class="theme-toggle" id="btn-theme" title="Ganti tema">${getTheme() === 'dark' ? '☀️' : '🌙'}</button>
           <div class="topbar-avatar" id="topbar-avatar" title="Profil">${initials}</div>
         </div>
         <main id="content"></main>
@@ -309,6 +332,11 @@ function screenShell(route) {
   qs('#overlay', wrap).onclick = closeDrawer;
   qs('#btn-logout', wrap).onclick = () => { S.clear(); location.hash = '#/welcome'; };
   qs('#topbar-avatar', wrap).onclick = () => { location.hash = '#/profil'; };
+  qs('#btn-theme', wrap).onclick = () => {
+    const next = getTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    qs('#btn-theme', wrap).textContent = next === 'dark' ? '☀️' : '🌙';
+  };
 
   const content = qs('#content', wrap);
   loadScreen(route, content);
@@ -369,6 +397,7 @@ async function screenDashboard(content) {
       ${r.perizinanAktif.map((x) => `<div class="list-row"><span>${x.DaftarNamaSiswa}</span><span class="badge ok">s/d ${x.TglKembali}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">📝</div><p>Tidak ada perizinan aktif</p></div>'}
     </div>
     <div class="card"><h3>📋 Stok Barang Tersedia</h3>
+      ${barChartHtml(r.stokBarang)}
       ${r.stokBarang.map((x) => `<div class="list-row"><span>${x.NamaBarang}</span><span>${x.Stok}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><p>Belum ada data barang</p></div>'}
     </div>
   `));
