@@ -14,7 +14,7 @@ applyTheme(getTheme());
 
 const CONFIG = {
   // GANTI dengan URL deployment Web App Apps Script kamu (Deploy > New deployment > Web app)
-  API_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_DEPLOYMENT_ID/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbwO13pWgxuG9leCONp1ntnx3qzN55YEQsh2LUXKEHrTC8pT8CXRC52k3NDALeMiguRq/exec',
   SCHOOL_NAME: 'SRT 2 Kota Pasuruan',
   TAGLINE: 'Cerdas Bersama, Tumbuh Setara',
   LOGO_URL: './icons/icon-192.png'
