@@ -8,7 +8,7 @@ const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_DEPLOYMENT_ID/exec',
   SCHOOL_NAME: 'SRT 2 Kota Pasuruan',
   TAGLINE: 'Cerdas Bersama, Tumbuh Setara',
-  LOGO_URL: './icons/icon-192.png'
+  LOGO_URL: './icon-192.png'
 };
 
 const S = {
