@@ -39,7 +39,7 @@ function screenLogin() {
       <div class="field"><label>NIP</label><input id="in-nip" type="text" inputmode="numeric"></div>
       <div class="field"><label>Password</label><input id="in-pass" type="password"></div>
       <button class="btn" id="btn-login-pass">Masuk</button>
-      <p class="muted-text" style="margin-top:10px;">Khusus Kepala Sekolah / Guru / Pegawai</p>`;
+      <p class="muted-text" style="margin-top:10px;">Sekolah Rakyat - Cerdas Bersama, Tumbuh Setara`;
     qs('#btn-login-pass', body).onclick = async () => {
       const nip = qs('#in-nip', body).value.trim();
       const pass = qs('#in-pass', body).value;
