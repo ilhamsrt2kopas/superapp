@@ -12,28 +12,69 @@ export const S = {
   clear() { localStorage.removeItem(SESSION_KEY); }
 };
 
-// Cache in-memory untuk data yang jarang berubah — hilang saat tab ditutup/reload,
-// jadi tetap aman (tidak pernah menampilkan data basi lintas sesi).
+/* ================= Loading indicator global — otomatis muncul/hilang tiap request ================= */
+let loaderCount = 0;
+function ensureLoaderEl() {
+  let bar = document.getElementById('global-loader');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'global-loader';
+    bar.innerHTML = '<div id="global-loader-bar"></div>';
+    document.body.appendChild(bar);
+  }
+  return bar;
+}
+export function showLoader() {
+  loaderCount++;
+  ensureLoaderEl().classList.add('show');
+}
+export function hideLoader() {
+  loaderCount = Math.max(0, loaderCount - 1);
+  if (loaderCount === 0) ensureLoaderEl().classList.remove('show');
+}
+
+/* ================= Cache in-memory data jarang berubah ================= */
 const CACHEABLE = { siswa_list: 60000, petugas_list: 60000, barang_list: 20000, barang_list_pinjam: 20000, barang_list_ambil: 20000 };
 const memCache = new Map();
 export function invalidateCache(action) { memCache.delete(action); }
 export function invalidateBarangCache() { ['barang_list', 'barang_list_pinjam', 'barang_list_ambil'].forEach(invalidateCache); }
 
-export async function api(action, payload) {
+/* ================= API client: timeout + retry otomatis, loader otomatis ================= */
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try { return await fetch(url, { ...options, signal: controller.signal }); }
+  finally { clearTimeout(id); }
+}
+
+export async function api(action, payload, opts = {}) {
   if (CACHEABLE[action]) {
     const hit = memCache.get(action);
     if (hit && Date.now() - hit.t < CACHEABLE[action]) return hit.data;
   }
   const body = { action, token: S.session ? S.session.token : null, payload: payload || {} };
+  const maxRetry = opts.retry === undefined ? 2 : opts.retry;
+  showLoader();
   try {
-    const res = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
-    const data = await res.json();
-    if (!data.ok && data.code === 'AUTH') { S.clear(); location.reload(); }
-    if (data.ok && CACHEABLE[action]) memCache.set(action, { t: Date.now(), data });
-    return data;
-  } catch (err) {
-    toast('Gagal terhubung ke server. Cek koneksi internet.');
+    let lastErr = null;
+    for (let attempt = 0; attempt <= maxRetry; attempt++) {
+      try {
+        const res = await fetchWithTimeout(CONFIG.API_URL, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body)
+        }, 20000);
+        const data = await res.json();
+        if (!data.ok && data.code === 'AUTH') { S.clear(); location.reload(); return data; }
+        if (data.ok && CACHEABLE[action]) memCache.set(action, { t: Date.now(), data });
+        return data;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < maxRetry) await new Promise((r) => setTimeout(r, 500 * (attempt + 1))); // backoff sebelum coba lagi
+      }
+    }
+    toast('Gagal terhubung ke server (sudah dicoba ' + (maxRetry + 1) + 'x). Cek koneksi internet.');
     return { ok: false, message: 'network_error' };
+  } finally {
+    hideLoader();
   }
 }
 
@@ -68,7 +109,7 @@ export function applyTheme(theme) { document.documentElement.setAttribute('data-
 export function getTheme() { return localStorage.getItem(THEME_KEY) || 'light'; }
 applyTheme(getTheme());
 
-/* ================= QR Scanner: TIDAK memuat pustaka/kamera sebelum tombol ditekan ================= */
+/* ================= QR Scanner: lazy-load, bisa ganti kamera TANPA reset ke default ================= */
 let activeScanner = null;
 export async function stopActiveScanner() {
   if (!activeScanner) return;
@@ -79,16 +120,16 @@ export async function stopActiveScanner() {
 
 export function renderQrLauncher(container, onDecode, debounceMs = 1200) {
   container.innerHTML = `<div class="qr-launcher"><button class="btn small" data-qr-start>📷 Mulai Scan</button></div>`;
-  qs('[data-qr-start]', container).onclick = () => startScannerUI(container, onDecode, debounceMs);
+  qs('[data-qr-start]', container).onclick = () => initScannerUI(container, onDecode, debounceMs);
 }
 
-async function startScannerUI(container, onDecode, debounceMs) {
+async function initScannerUI(container, onDecode, debounceMs) {
   container.innerHTML = `<p class="muted-text">Memuat pemindai...</p>`;
   try {
     await loadScript('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js', 'Html5Qrcode');
   } catch (e) {
     container.innerHTML = `<p class="error-text">Gagal memuat pustaka pemindai. Cek koneksi lalu coba lagi.</p><button class="btn small" data-qr-retry>Coba Lagi</button>`;
-    qs('[data-qr-retry]', container).onclick = () => startScannerUI(container, onDecode, debounceMs);
+    qs('[data-qr-retry]', container).onclick = () => initScannerUI(container, onDecode, debounceMs);
     return;
   }
   if (!window.isSecureContext) { container.innerHTML = `<p class="error-text">Kamera hanya bisa diakses lewat HTTPS.</p>`; return; }
@@ -109,24 +150,34 @@ async function startScannerUI(container, onDecode, debounceMs) {
   const debouncedDecode = debounce((text) => onDecode(text), debounceMs);
   const config = { fps: 10, qrbox: (vw, vh) => { const s = Math.floor(Math.min(vw, vh) * 0.7); return { width: s, height: s }; } };
 
-  const camSelect = qs('#qr-cam-select', container);
-  const chosen = camSelect ? camSelect.value : (cameras[0] ? cameras[0].id : { facingMode: 'environment' });
-
-  try {
-    await scanner.start(chosen, config, (t) => debouncedDecode(t), () => {});
-  } catch (err) {
+  // Fungsi start dipisah dari pembuatan UI, supaya ganti kamera TIDAK membangun ulang <select>
+  // (yang sebelumnya jadi penyebab kamera selalu kembali ke default).
+  async function startCamera(cameraIdOrConfig) {
     try {
-      await scanner.start({ facingMode: 'environment' }, config, (t) => debouncedDecode(t), () => {});
-    } catch (err2) {
-      let pesan = 'Tidak bisa mengakses kamera. Izinkan akses kamera di pengaturan browser.';
-      if (err2.name === 'NotAllowedError') pesan = 'Akses kamera ditolak. Aktifkan izin Kamera untuk situs ini.';
-      if (err2.name === 'NotReadableError') pesan = 'Kamera sedang dipakai aplikasi lain.';
-      container.innerHTML = `<p class="error-text">${pesan}</p><button class="btn small" data-qr-retry>Coba Lagi</button>`;
-      qs('[data-qr-retry]', container).onclick = () => startScannerUI(container, onDecode, debounceMs);
-      return;
-    }
+      await scanner.start(cameraIdOrConfig, config, (t) => debouncedDecode(t), () => {});
+      return true;
+    } catch (err) { return false; }
   }
-  if (camSelect) camSelect.onchange = async () => { await stopActiveScanner(); startScannerUI(container, onDecode, debounceMs); };
+
+  const camSelect = qs('#qr-cam-select', container);
+  const firstChoice = camSelect ? camSelect.value : (cameras[0] ? cameras[0].id : { facingMode: 'environment' });
+  let started = await startCamera(firstChoice);
+  if (!started) started = await startCamera({ facingMode: 'environment' });
+  if (!started) {
+    container.innerHTML = `<p class="error-text">Tidak bisa mengakses kamera. Izinkan akses kamera di pengaturan browser.</p><button class="btn small" data-qr-retry>Coba Lagi</button>`;
+    qs('[data-qr-retry]', container).onclick = () => initScannerUI(container, onDecode, debounceMs);
+    return;
+  }
+
+  if (camSelect) {
+    camSelect.onchange = async () => {
+      // Hentikan stream lama, START ULANG PADA SCANNER YANG SAMA dengan id kamera yang baru
+      // dipilih dari dropdown — tanpa membangun ulang <select> sehingga pilihan tidak reset.
+      try { await scanner.stop(); } catch (e) {}
+      const ok = await startCamera(camSelect.value);
+      if (!ok) toast('Gagal beralih ke kamera tersebut');
+    };
+  }
   qs('[data-qr-stop]', container).onclick = async () => { await stopActiveScanner(); renderQrLauncher(container, onDecode, debounceMs); };
 }
 
