@@ -120,37 +120,24 @@ async function loadScreen(route, content) {
 
 /* ================= DASHBOARD — ringkas dulu, detail menyusul ================= */
 async function screenDashboard(content) {
-  const sum = await api('dashboard_summary');
-  if (!sum.ok) return (content.innerHTML = `<div class="card">Gagal memuat dasbor: ${sum.message}</div>`);
-  const hadir = Math.max(0, sum.totalSiswa - sum.tidakHadirCount);
-  const persen = sum.totalSiswa ? Math.round((hadir / sum.totalSiswa) * 100) : 0;
+  const r = await api('dashboard_data');
+  if (!r.ok) { content.innerHTML = `<div class="card">Gagal memuat dasbor: ${r.message} <button class="btn small" id="retry-dash">Coba Lagi</button></div>`; qs('#retry-dash', content).onclick = () => loadScreen('dashboard', content); return; }
+  const hadir = Math.max(0, r.totalSiswa - r.siswaTidakHadir.length);
+  const persen = r.totalSiswa ? Math.round((hadir / r.totalSiswa) * 100) : 0;
+  const items = r.stokBarang.slice().sort((a, b) => Number(b.Stok) - Number(a.Stok)).slice(0, 6);
+  const max = Math.max(1, ...items.map((x) => Number(x.Stok) || 0));
+
   content.innerHTML = `
     <div class="stat-grid">
-      <div class="stat-card accent"><div class="stat-number">${persen}%</div><div class="stat-label">Kehadiran (${hadir}/${sum.totalSiswa})</div><div class="progress-track"><div class="progress-fill" style="width:${persen}%;"></div></div></div>
-      <div class="stat-card"><div class="stat-number">${sum.peminjamanCount}</div><div class="stat-label">Peminjaman Hari Ini</div></div>
-      <div class="stat-card"><div class="stat-number">${sum.perizinanCount}</div><div class="stat-label">Perizinan Aktif</div></div>
-      <div class="stat-card"><div class="stat-number">${sum.jenisBarangCount}</div><div class="stat-label">Jenis Barang</div></div>
+      <div class="stat-card accent"><div class="stat-number">${persen}%</div><div class="stat-label">Kehadiran (${hadir}/${r.totalSiswa})</div><div class="progress-track"><div class="progress-fill" style="width:${persen}%;"></div></div></div>
+      <div class="stat-card"><div class="stat-number">${r.peminjamanHariIni.length}</div><div class="stat-label">Peminjaman Hari Ini</div></div>
+      <div class="stat-card"><div class="stat-number">${r.perizinanAktif.length}</div><div class="stat-label">Perizinan Aktif</div></div>
+      <div class="stat-card"><div class="stat-number">${r.stokBarang.length}</div><div class="stat-label">Jenis Barang</div></div>
     </div>
-    <div class="card"><h3>🚫 Siswa Tidak Hadir</h3><div id="dtl-tidakhadir"><div class="muted-text">Memuat...</div></div></div>
-    <div class="card"><h3>📦 Peminjaman Hari Ini</h3><div id="dtl-peminjaman"><div class="muted-text">Memuat...</div></div></div>
-    <div class="card"><h3>📝 Perizinan Aktif</h3><div id="dtl-perizinan"><div class="muted-text">Memuat...</div></div></div>
-    <div class="card"><h3>📋 Stok Barang</h3><div id="dtl-barang"></div></div>`;
-
-  api('dashboard_detail', { bagian: 'tidakhadir' }).then((r) => {
-    qs('#dtl-tidakhadir', content).innerHTML = (r.data || []).slice(0, 15).map((x) => `<div class="list-row"><span>${x.Nama}</span><span class="badge bad">${x.Kelas || ''}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">✅</div><p>Semua siswa hadir</p></div>';
-  });
-  api('dashboard_detail', { bagian: 'peminjaman' }).then((r) => {
-    qs('#dtl-peminjaman', content).innerHTML = (r.data || []).map((x) => `<div class="list-row"><span>${x.Peminjam}</span><span class="badge warn">${x.Status}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">📦</div><p>Belum ada peminjaman hari ini</p></div>';
-  });
-  api('dashboard_detail', { bagian: 'perizinan' }).then((r) => {
-    qs('#dtl-perizinan', content).innerHTML = (r.data || []).map((x) => `<div class="list-row"><span>${x.DaftarNamaSiswa}</span><span class="badge ok">s/d ${x.TglKembali}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">📝</div><p>Tidak ada perizinan aktif</p></div>';
-  });
-  api('dashboard_detail', { bagian: 'barang' }).then((r) => {
-    const items = (r.data || []).slice().sort((a, b) => Number(b.Stok) - Number(a.Stok)).slice(0, 6);
-    const max = Math.max(1, ...items.map((x) => Number(x.Stok) || 0));
-    qs('#dtl-barang', content).innerHTML = `<div class="bar-chart">${items.map((x) => `
-      <div class="bar-chart-row"><span class="bar-chart-label">${x.NamaBarang}</span><div class="bar-chart-track"><div class="bar-chart-fill" style="width:${Math.max(4, (x.Stok / max) * 100)}%;"></div></div><span class="bar-chart-value">${x.Stok}</span></div>`).join('')}</div>`;
-  });
+    <div class="card"><h3>🚫 Siswa Tidak Hadir</h3>${r.siswaTidakHadir.slice(0, 15).map((x) => `<div class="list-row"><span>${x.Nama}</span><span class="badge bad">${x.Kelas || ''}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">✅</div><p>Semua siswa hadir</p></div>'}</div>
+    <div class="card"><h3>📦 Peminjaman Hari Ini</h3>${r.peminjamanHariIni.map((x) => `<div class="list-row"><span>${x.Peminjam}</span><span class="badge warn">${x.Status}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">📦</div><p>Belum ada</p></div>'}</div>
+    <div class="card"><h3>📝 Perizinan Aktif</h3>${r.perizinanAktif.map((x) => `<div class="list-row"><span>${x.DaftarNamaSiswa}</span><span class="badge ok">s/d ${x.TglKembali}</span></div>`).join('') || '<div class="empty-state"><div class="empty-icon">📝</div><p>Tidak ada</p></div>'}</div>
+    <div class="card"><h3>📋 Stok Barang</h3><div class="bar-chart">${items.map((x) => `<div class="bar-chart-row"><span class="bar-chart-label">${x.NamaBarang}</span><div class="bar-chart-track"><div class="bar-chart-fill" style="width:${Math.max(4, (x.Stok / max) * 100)}%;"></div></div><span class="bar-chart-value">${x.Stok}</span></div>`).join('')}</div></div>`;
 }
 
 /* ================= ABSENSI — QR & manual (tanpa QR) ================= */
