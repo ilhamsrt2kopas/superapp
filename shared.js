@@ -1,8 +1,8 @@
 export const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_DEPLOYMENT_ID/exec',
-  SCHOOL_NAME: 'SRT 2 Kota Pasuruan',
+  API_URL: 'https://script.google.com/macros/s/AKfycbyNM324h2AohqqM_gZ9APSc9LjT0CXyCOQ3CYlt463gS2vvz-VLh0SyxsATTw1DMFZG/exec',
+  SCHOOL_NAME: 'Sekolah Rakyat Kota Pasuruan',
   TAGLINE: 'Cerdas Bersama, Tumbuh Setara',
-  LOGO_URL: './icons/icon-192.png'
+  LOGO_URL: './icon-192.png'
 };
 
 const SESSION_KEY = 'srt2_session';
