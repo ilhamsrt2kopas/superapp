@@ -10,7 +10,7 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 self.addEventListener('fetch', (e) => {
-  if (e.request.url.indexOf('https://script.google.com/macros/s/AKfycbw89BVWi-D0ah4Cpt9aMvDo2Y79NClYneixhXCuKpmK07q0-sTW4loIFb9Uwp2z9zGg/exec') !== -1) {
+  if (e.request.url.indexOf('https://script.google.com') !== -1) {
     e.respondWith(fetch(e.request).catch(() => new Response(JSON.stringify({ ok: false, message: 'Offline' }))));
     return;
   }
