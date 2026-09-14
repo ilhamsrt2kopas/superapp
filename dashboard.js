@@ -120,7 +120,7 @@ async function loadScreen(route, content) {
 
 /* ================= DASHBOARD — ringkas dulu, detail menyusul ================= */
 async function screenDashboard(content) {
-  const r = await api('dashboard_data');
+  const r = await api('dashboard_summary');
   if (!r.ok) { content.innerHTML = `<div class="card">Gagal memuat dasbor: ${r.message} <button class="btn small" id="retry-dash">Coba Lagi</button></div>`; qs('#retry-dash', content).onclick = () => loadScreen('dashboard', content); return; }
   const hadir = Math.max(0, r.totalSiswa - r.siswaTidakHadir.length);
   const persen = r.totalSiswa ? Math.round((hadir / r.totalSiswa) * 100) : 0;
