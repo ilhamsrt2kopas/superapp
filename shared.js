@@ -160,7 +160,7 @@ async function initScannerUI(container, onDecode, debounceMs) {
   }
 
   const camSelect = qs('#qr-cam-select', container);
-  const firstChoice = camSelect ? camSelect.value : (cameras[1] ? cameras[1].id : { facingMode: 'environment' });
+  const firstChoice = camSelect ? camSelect.value : (cameras[0] ? cameras[0].id : { facingMode: 'environment' });
   let started = await startCamera(firstChoice);
   if (!started) started = await startCamera({ facingMode: 'environment' });
   if (!started) {
